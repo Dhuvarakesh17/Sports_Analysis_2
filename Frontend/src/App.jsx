@@ -30,13 +30,17 @@ function App() {
             <TeamSelector
               leagueId={selectedLeague}
               onTeamSelect={(team) => setSelectedTeam(team)}
+              backendUrl="https://sports-analysis-1.onrender.com" // ✅ Pass the backend URL
             />
           </div>
         )}
 
         {/* Team Statistics */}
         {selectedTeam ? (
-          <TeamStatistics teamId={selectedTeam} />
+          <TeamStatistics 
+            teamId={selectedTeam} 
+            backendUrl="https://sports-analysis-1.onrender.com" // ✅ Pass the backend URL
+          />
         ) : (
           <p className="text-lg text-center text-gray-400">
             Select a team to view statistics 📊
@@ -48,5 +52,3 @@ function App() {
 }
 
 export default App;
-
-

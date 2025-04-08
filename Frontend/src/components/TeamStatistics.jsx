@@ -18,7 +18,7 @@ const TeamStatistics = ({ teamId }) => {
     setError(null);
 
     axios
-      .get(`http://127.0.0.1:5000/team-stats/${teamId}`)
+      .get(`https://sports-analysis-1.onrender.com/team-stats/${teamId}`)
       .then((response) => {
         if (response.data.error) throw new Error(response.data.error);
         setStats(response.data);
@@ -90,5 +90,3 @@ const TeamStatistics = ({ teamId }) => {
 };
 
 export default TeamStatistics;
-
-

@@ -8,7 +8,7 @@ function LeagueSelector({ onLeagueSelect }) {
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5000/leagues");
+        const response = await fetch("https://sports-analysis-1.onrender.com/leagues");
         if (!response.ok) throw new Error("Failed to fetch leagues");
         const data = await response.json();
         setLeagues(data);
@@ -48,5 +48,3 @@ function LeagueSelector({ onLeagueSelect }) {
 }
 
 export default LeagueSelector;
-
-

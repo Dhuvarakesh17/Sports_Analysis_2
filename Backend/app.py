@@ -2,11 +2,15 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 import os
+import time
 from dotenv import load_dotenv
 
-# Load API Key
+# Load API Key from .env
 load_dotenv()
 API_KEY = os.getenv("FOOTBALL_API_KEY")
+
+if not API_KEY:
+    raise ValueError("FOOTBALL_API_KEY is not set in the environment variables!")
 
 app = Flask(__name__)
 CORS(app)
@@ -22,29 +26,29 @@ def fetch_with_cache(endpoint):
     if endpoint in CACHE and (current_time - CACHE[endpoint]["time"] < CACHE_EXPIRY):
         return CACHE[endpoint]["data"]  # Return cached data
     
-    response = requests.get(f"{BASE_URL}/{endpoint}", headers=HEADERS)
+    try:
+        response = requests.get(f"{BASE_URL}/{endpoint}", headers=HEADERS)
+        
+        if response.status_code == 429:
+            return {"error": "Rate limit exceeded. Try again later."}, 429  # Handle rate limit
+        
+        if response.status_code != 200:
+            return {"error": "Failed to fetch data"}, response.status_code  # Handle other errors
 
-    if response.status_code == 429:
-        return {"error": "Rate limit exceeded. Try again later."}, 429  # Handle rate limit
-    
-    if response.status_code != 200:
-        return {"error": "Failed to fetch data"}, response.status_code  # Handle other errors
-
-    data = response.json()
-    CACHE[endpoint] = {"data": data, "time": current_time}  # Store in cache
-    return data
+        data = response.json()
+        CACHE[endpoint] = {"data": data, "time": current_time}  # Store in cache
+        return data
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Request failed: {str(e)}"}, 500  # Handle connection errors
 
 # Fetch available leagues (Free Plan Leagues Only)
 @app.route("/leagues", methods=["GET"])
 def get_leagues():
-    url = f"{BASE_URL}/competitions"
-    response = requests.get(url, headers=HEADERS)
+    data = fetch_with_cache("competitions")
+    
+    if isinstance(data, tuple):  # If an error tuple is returned
+        return jsonify(data[0]), data[1]
 
-    if response.status_code != 200:
-        return jsonify({"error": "Failed to fetch leagues"}), response.status_code
-
-    data = response.json()
-    # Keep only free plan leagues
     free_leagues = ["PL", "PD", "BL1", "SA", "FL1", "DED", "PPL", "CL", "EL", "WC", "EC", "BSA"]
     leagues = [{"id": comp["code"], "name": comp["name"]} for comp in data.get("competitions", []) if comp["code"] in free_leagues]
 
@@ -53,33 +57,25 @@ def get_leagues():
 # Fetch teams in a league using league code
 @app.route("/teams/<league_code>", methods=["GET"])
 def get_teams(league_code):
-    url = f"{BASE_URL}/competitions/{league_code}/teams"
-    response = requests.get(url, headers=HEADERS)
+    data = fetch_with_cache(f"competitions/{league_code}/teams")
+    
+    if isinstance(data, tuple):  # If an error tuple is returned
+        return jsonify(data[0]), data[1]
 
-    if response.status_code != 200:
-        return jsonify({"error": f"Failed to fetch teams for {league_code}"}), response.status_code
-
-    data = response.json()
     teams = [{"id": team["id"], "name": team["name"]} for team in data.get("teams", [])]
     return jsonify(teams)
 
 # Fetch team statistics
 @app.route("/team-stats/<int:team_id>", methods=["GET"])
 def get_team_stats(team_id):
-    url = f"{BASE_URL}/teams/{team_id}"
-    response = requests.get(url, headers=HEADERS)
+    data = fetch_with_cache(f"teams/{team_id}")
 
-    # Handle restricted data
-    if response.status_code == 403:
-        return jsonify({"error": "Access denied for this team. Upgrade your API plan to access more details."}), 403
+    if isinstance(data, tuple):  # If an error tuple is returned
+        return jsonify(data[0]), data[1]
 
-    # Handle other errors
-    if response.status_code != 200:
-        return jsonify({"error": "Failed to fetch team stats"}), response.status_code
+    if "error" in data:
+        return jsonify(data), 403
 
-    data = response.json()
-
-    # Extract available details in free tier
     stats = {
         "name": data.get("name", "Unknown"),
         "shortName": data.get("shortName", "N/A"),
@@ -93,7 +89,6 @@ def get_team_stats(team_id):
 
     return jsonify(stats)
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

@@ -12,7 +12,7 @@ function TeamSelector({ leagueId, onTeamSelect }) {
     setTeams([]); // Clear previous teams when league changes
     setError("");
 
-    fetch(`http://127.0.0.1:5000/teams/${leagueId}`)
+    fetch(`https://sports-analysis-1.onrender.com/teams/${leagueId}`)
       .then((response) => response.json())
       .then((data) => {
         if (data.error || !Array.isArray(data) || data.length === 0) {
@@ -56,4 +56,3 @@ function TeamSelector({ leagueId, onTeamSelect }) {
 }
 
 export default TeamSelector;
-

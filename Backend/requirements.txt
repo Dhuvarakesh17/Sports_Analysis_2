@@ -1,7 +1,6 @@
 flask
 gunicorn
 requests
-pandas
 python-dotenv
 flask-cors
 jsonify
