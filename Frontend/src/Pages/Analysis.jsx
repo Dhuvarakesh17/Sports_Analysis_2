@@ -44,21 +44,11 @@ export default function Analysis() {
           </div>
         )}
 
-        {/* League + Team Statistics */}
-        {selectedLeague ? (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <LeagueStatistics leagueId={selectedLeague} />
-            {selectedTeam ? (
-              <TeamStatistics teamId={selectedTeam} />
-            ) : (
-              <div className="flex items-center justify-center p-8 text-center bg-gray-800/50 border border-gray-700/70 rounded-2xl">
-                <p className="text-lg text-gray-300">
-                  Select a team to view detailed stats, or browse the league
-                  table on the left.
-                </p>
-              </div>
-            )}
-          </div>
+        {/* League Statistics OR Team Statistics */}
+        {selectedTeam ? (
+          <TeamStatistics teamId={selectedTeam} />
+        ) : selectedLeague ? (
+          <LeagueStatistics leagueId={selectedLeague} />
         ) : (
           <div className="p-8 text-center bg-gray-800/50 rounded-xl">
             <p className="text-xl text-gray-400">
