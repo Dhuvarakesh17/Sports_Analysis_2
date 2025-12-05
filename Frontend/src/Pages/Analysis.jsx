@@ -2,6 +2,7 @@ import { useState } from "react";
 import LeagueSelector from "../components/LeagueSelector";
 import TeamSelector from "../components/TeamSelector";
 import TeamStatistics from "../components/TeamStatistics";
+import LeagueStatistics from "../components/LeagueStatistics";
 import { Link } from "react-router-dom";
 
 export default function Analysis() {
@@ -35,7 +36,7 @@ export default function Analysis() {
 
         {/* Team Selection */}
         {selectedLeague && (
-          <div className="mb-4">
+          <div className="mb-6">
             <TeamSelector
               leagueId={selectedLeague}
               onTeamSelect={(team) => setSelectedTeam(team)}
@@ -43,15 +44,25 @@ export default function Analysis() {
           </div>
         )}
 
-        {/* Team Statistics */}
-        {selectedTeam ? (
-          <TeamStatistics teamId={selectedTeam} />
+        {/* League + Team Statistics */}
+        {selectedLeague ? (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <LeagueStatistics leagueId={selectedLeague} />
+            {selectedTeam ? (
+              <TeamStatistics teamId={selectedTeam} />
+            ) : (
+              <div className="flex items-center justify-center p-8 text-center bg-gray-800/50 border border-gray-700/70 rounded-2xl">
+                <p className="text-lg text-gray-300">
+                  Select a team to view detailed stats, or browse the league
+                  table on the left.
+                </p>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="p-8 text-center bg-gray-800/50 rounded-xl">
             <p className="text-xl text-gray-400">
-              {selectedLeague
-                ? "Select a team to view detailed statistics 📊"
-                : "Start by selecting a league above 🌍"}
+              Start by selecting a league above 🌍
             </p>
           </div>
         )}
