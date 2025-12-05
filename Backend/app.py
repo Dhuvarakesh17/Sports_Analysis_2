@@ -89,6 +89,63 @@ def get_team_stats(team_id):
 
     return jsonify(stats)
 
+
+# Fetch league standings / stats
+@app.route("/league-stats/<league_code>", methods=["GET"])
+def get_league_stats(league_code):
+    data = fetch_with_cache(f"competitions/{league_code}/standings")
+
+    if isinstance(data, tuple):
+        return jsonify(data[0]), data[1]
+
+    if "error" in data:
+        return jsonify(data), 403
+
+    competition = data.get("competition", {})
+    season = data.get("season", {})
+
+    standings = []
+    for table in data.get("standings", []):
+        standings.append({
+            "type": table.get("type"),
+            "group": table.get("group"),
+            "table": [
+                {
+                    "position": entry.get("position"),
+                    "teamId": entry.get("team", {}).get("id"),
+                    "team": entry.get("team", {}).get("name"),
+                    "crest": entry.get("team", {}).get("crest"),
+                    "played": entry.get("playedGames"),
+                    "won": entry.get("won"),
+                    "draw": entry.get("draw"),
+                    "lost": entry.get("lost"),
+                    "points": entry.get("points"),
+                    "gf": entry.get("goalsFor"),
+                    "ga": entry.get("goalsAgainst"),
+                    "gd": entry.get("goalDifference"),
+                    "form": entry.get("form"),
+                }
+                for entry in table.get("table", [])
+            ],
+        })
+
+    payload = {
+        "competition": {
+            "name": competition.get("name"),
+            "code": competition.get("code"),
+            "emblem": competition.get("emblem"),
+            "area": competition.get("area", {}).get("name"),
+        },
+        "season": {
+            "startDate": season.get("startDate"),
+            "endDate": season.get("endDate"),
+            "currentMatchday": season.get("currentMatchday"),
+        },
+        "standings": standings,
+    }
+
+    return jsonify(payload)
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
